@@ -1,0 +1,7 @@
+# Runtime artifacts — regenerated on first run, not source.
+visiongate.db
+captures/
+alerts.log
+sample.jpg
+__pycache__/
+*.pyc
