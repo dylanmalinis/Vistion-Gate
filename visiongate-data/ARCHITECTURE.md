@@ -77,27 +77,25 @@ This is what happens every time the Pi checks a face. It is the single most
 important path in the system.
 
 ```mermaid
-sequenceDiagram
-    participant Pi as Raspberry Pi (firmware)
-    participant API as app.py (/verify)
-    participant Rec as recognizer.py
-    participant DB as store.py / SQLite
-    participant Al as alerts.py
-
-    Pi->>API: POST /verify { image_base64 } + header X-API-Key
-    API->>API: 1. check X-API-Key (else 401)
-    API->>API: 2. decode base64 image (else 400)
-    API->>Rec: 3. recognize(image_bytes)
-    Rec->>DB: get_users() (compare against enrolled faces)
-    Rec-->>API: RecognitionResult(name, confidence)
-    API->>API: 4. GRANTED if name known AND confidence >= 0.75
-    API->>DB: 5. save capture image + log_event(...)
-    DB-->>API: event_id
-    alt result is DENIED / UNKNOWN
-        API->>Al: 6. send_alert(event)
-    end
-    API-->>Pi: { result, name, confidence, event_id }
+flowchart TD
+    A["Pi sends POST /verify with the image and X-API-Key"] --> B{"Valid API key?"}
+    B -->|no| B1["Respond 401 Unauthorized"]
+    B -->|yes| C{"Valid base64 image?"}
+    C -->|no| C1["Respond 400 Bad Request"]
+    C -->|yes| D["recognizer.recognize compares the face against<br/>enrolled users, returns a name and a confidence"]
+    D --> E{"Name known AND confidence at least 0.75?"}
+    E -->|yes| F["result = GRANTED"]
+    E -->|no| G["result = DENIED"]
+    F --> H["Save the capture image and log the event;<br/>the store returns an event_id"]
+    G --> H
+    H --> I{"Was it denied or unknown?"}
+    I -->|yes| J["alerts.send_alert fires a notification"]
+    I -->|no| K["No alert"]
+    J --> L["Respond to the Pi with result, name, confidence, event_id"]
+    K --> L
 ```
+
+Read it top to bottom: each diamond is a check, each box is an action.
 
 **Step 4 is the policy** and it's deliberately strict:
 - The face must match a **registered** user (not `UNKNOWN`), **and**
@@ -115,31 +113,23 @@ coordinated through the database. The browser **starts** a scan; the Pi
 **fills** it; the server **finalizes** it into a user.
 
 ```mermaid
-sequenceDiagram
-    participant B as Admin browser (dashboard)
-    participant API as app.py
-    participant DB as store.py / SQLite
-    participant Pi as Pi (enroll_runner.py)
-    participant Rec as recognizer.py
-
-    B->>API: POST /enroll/start { name }  (logged in)
-    API->>DB: start_enrollment(name, frames_needed=5)
-    Note over DB: a row in enrollment_sessions<br/>status = "active", encodings = []
-
-    loop until enough frames
-        Pi->>API: GET /enroll/pending  (X-API-Key)
-        API->>DB: get_active_enrollment()
-        API-->>Pi: { active:true, name, frames_needed, frames_collected }
-        Pi->>Pi: camera captures a frame
-        Pi->>API: POST /enroll { image_base64 }  (X-API-Key)
-        API->>Rec: make_encoding(image)
-        API->>DB: add_enrollment_frame(encoding)
-        Note over DB: append encoding;<br/>when count == frames_needed → create user
-    end
-
-    DB->>DB: add_user(name, [all encodings]); session → "complete"
-    B->>API: GET /api/enroll/status (polling) → shows progress bar fill
+flowchart TD
+    A["Admin (logged in) clicks Start scan:<br/>POST /enroll/start with a name"] --> B["store.start_enrollment creates an active session<br/>with an empty list of encodings"]
+    B --> P["Pi asks GET /enroll/pending using the X-API-Key"]
+    P --> Q{"Is a scan active?"}
+    Q -->|"no, wait"| P
+    Q -->|yes| E["Pi camera captures one frame"]
+    E --> F["Pi sends POST /enroll with the image and X-API-Key"]
+    F --> G["recognizer.make_encoding turns the frame into an encoding"]
+    G --> H["store.add_enrollment_frame appends the encoding to the session"]
+    H --> I{"Collected all the frames needed?"}
+    I -->|"no, keep scanning"| P
+    I -->|yes| J["store.add_user saves the person with all encodings;<br/>session marked complete"]
+    J --> K["Dashboard progress bar shows complete"]
 ```
+
+The arrows looping back to "GET /enroll/pending" are the capture loop: the Pi
+keeps capturing frames until enough are collected, then the user is created.
 
 Storing **multiple frames per person** makes matching more robust — the real
 `face_recognition` backend compares a new face against *all* of a user's
