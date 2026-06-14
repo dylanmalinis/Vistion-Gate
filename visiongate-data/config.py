@@ -15,6 +15,28 @@ Secrets read from environment variables so you never commit them:
 
 import os
 
+
+def _load_dotenv() -> None:
+    """Load KEY=VALUE lines from a local .env file into the environment.
+
+    Lets you keep secrets (API key, admin password, Telegram token) in a file
+    that is git-ignored instead of hard-coding them. Existing environment
+    variables always win, so this never overrides what you set explicitly.
+    """
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip())
+
+
+_load_dotenv()
+
 # --- Server ---------------------------------------------------------------
 # The firmware (api_client.py) posts to http://localhost:8000/verify, so we
 # serve on 8000 to match it out of the box.
