@@ -5,7 +5,8 @@ firmware calls, the SQLite event log, the live dashboard, the alerting system,
 camera-based face enrollment, and admin auth.
 
 > For the whole-project picture (all three layers, status, data flow), see the
-> **[root README](../README.md)**. This file is the data-layer reference.
+> **[root README](../README.md)**. This file is the quick data-layer reference;
+> for a full deep dive (flows, every table, diagrams) see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 Like the firmware, this is **mock-first**: it runs end-to-end on a laptop with
 no camera, no Pi, and no accounts. Config switches turn on the real backends.
