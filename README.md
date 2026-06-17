@@ -21,7 +21,7 @@ on anyone unrecognized. Total hardware cost target: **under $80**.
 
 ---
 
-## 2. How it works (data flow)
+## 2. Data Flow
 
 ```
 Person approaches
@@ -46,7 +46,7 @@ data (see [§7](#7-the-api-contract)).
 
 ---
 
-## 3. The three layers (who owns what)
+## 3. The three layers
 
 | Layer | Owner | Responsibility | Folder |
 |---|---|---|---|
