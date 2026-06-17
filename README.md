@@ -11,7 +11,7 @@ combines the original product requirements with the current state of the code.
 
 ---
 
-## 1. The idea (in one paragraph)
+## 1. The idea
 
 Keys and access cards are expensive, easy to lose or copy, and hard to audit.
 VisionGate is a low-cost alternative built on a Raspberry Pi: a person walks
@@ -63,20 +63,20 @@ before the real Raspberry Pi, camera, and door hardware are connected.
 
 | Capability | Status |
 |---|---|
-| Firmware state machine (IDLE→CAPTURE→VERIFY→GRANT/DENY/FALLBACK) | ✅ Built, runs on laptop (simulated hardware) |
-| RFID fallback authentication | ✅ Built (simulated) |
-| Data API (`/verify`, `/recognize`) | ✅ Built, matches the firmware contract |
-| Face recognition | ✅ Pluggable — stub backend runs now; real `face_recognition` ready for the Pi |
-| SQLite event log + stats | ✅ Built |
-| Live web dashboard | ✅ Built (auto-refreshing, off-white theme) |
-| DENIED/UNKNOWN alerts | ✅ Pluggable — console/file now, Telegram ready |
-| Face enrollment from the **camera** (not a file) | ✅ Built — admin starts a scan, the Pi captures frames |
-| **Admin login** on the dashboard | ✅ Built (session login) |
-| **API key** between Pi and server | ✅ Built (shared `X-API-Key`) |
-| **Optional face + RFID two-factor** unlock | ✅ Built (off by default) |
-| **Capture retention + privacy** controls | ✅ Built |
-| Automated tests | ✅ 21 passing (`pytest`) |
-| Production server | ✅ Waitress (`serve.py`) |
+| Firmware state machine (IDLE→CAPTURE→VERIFY→GRANT/DENY/FALLBACK) | DONE Built, runs on laptop (simulated hardware) |
+| RFID fallback authentication | DONE Built (simulated) |
+| Data API (`/verify`, `/recognize`) | DONE Built, matches the firmware contract |
+| Face recognition | DONE Pluggable — stub backend runs now; real `face_recognition` ready for the Pi |
+| SQLite event log + stats | DONE Built |
+| Live web dashboard | DONE Built (auto-refreshing, off-white theme) |
+| DENIED/UNKNOWN alerts | DONE Pluggable — console/file now, Telegram ready |
+| Face enrollment from the **camera** (not a file) | DONE Built — admin starts a scan, the Pi captures frames |
+| **Admin login** on the dashboard | DONE Built (session login) |
+| **API key** between Pi and server | DONE Built (shared `X-API-Key`) |
+| **Optional face + RFID two-factor** unlock | DONE Built (off by default) |
+| **Capture retention + privacy** controls | DONE Built |
+| Automated tests | DONE 21 passing (`pytest`) |
+| Production server | DONE Waitress (`serve.py`) |
 | Real camera / GPIO / dlib on the Pi | ⏳ Pending — the hardware-dependent step |
 
 > The biggest remaining risk is **real face recognition on the Pi within the
