@@ -15,6 +15,7 @@ class State(Enum):
     IDLE = auto()
     CAPTURE = auto()
     VERIFY = auto()
+    SECOND_FACTOR = auto()
     GRANT = auto()
     DENY = auto()
     FALLBACK = auto()
@@ -63,7 +64,23 @@ def run_state_machine() -> None:
                     continue
 
                 access_granted = api_client.verify_face(image_base64)
-                state = State.GRANT if access_granted else State.DENY
+                if not access_granted:
+                    state = State.DENY
+                elif config.REQUIRE_SECOND_FACTOR:
+                    # Face passed, but require a whitelisted RFID tap before
+                    # unlocking. Defends against face-spoofing (e.g. a photo).
+                    logging.info("Face granted. Awaiting second factor (RFID).")
+                    state = State.SECOND_FACTOR
+                else:
+                    state = State.GRANT
+
+            elif state == State.SECOND_FACTOR:
+                card_id = rfid.read_card_id()
+                if rfid.is_card_whitelisted(card_id):
+                    state = State.GRANT
+                else:
+                    logging.warning("Second factor failed. Denying access.")
+                    state = State.DENY
 
             elif state == State.GRANT:
                 hardware.show_green_led()

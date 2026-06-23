@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VisionGate — Live Access Dashboard</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #f6f4ee; color: #33312b;
+    }
+    header {
+      position: relative; padding: 22px 24px; border-bottom: 1px solid #e6e2d8; background: #fbfaf5;
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+    }
+    header h1 { font-size: 22px; margin: 0; color: #2b2924; letter-spacing: .01em; }
+    header .sub { color: #948f80; font-size: 13px; }
+    header .logout { position: absolute; right: 24px; top: 24px; font-size: 13px;
+                     color: #948f80; text-decoration: none; }
+    header .logout:hover { color: #514d43; }
+    main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+    .card { background: #ffffff; border: 1px solid #e6e2d8; border-radius: 12px; padding: 16px;
+            box-shadow: 0 1px 2px rgba(60,55,40,.04); }
+    .card .label { color: #948f80; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    .card .value { font-size: 30px; font-weight: 700; margin-top: 6px; color: #2b2924; }
+    .card.deny .value { color: #c0492f; }
+    .card.grant .value { color: #2e8b57; }
+    .panel { background: #ffffff; border: 1px solid #e6e2d8; border-radius: 12px; padding: 18px;
+             box-shadow: 0 1px 2px rgba(60,55,40,.04); margin-bottom: 24px; }
+    .panel h2 { margin-top: 0; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    input[type=text] { padding: 9px 12px; border: 1px solid #ddd8cc; border-radius: 8px;
+                       font-size: 14px; background: #fbfaf5; color: #33312b; }
+    button { padding: 9px 14px; border: none; border-radius: 8px; background: #2b2924;
+             color: #fbfaf5; font-size: 14px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #413d34; }
+    button.ghost { background: #efece3; color: #514d43; }
+    button.ghost:hover { background: #e4e0d4; }
+    button.danger { background: #f3e3df; color: #c0492f; }
+    .progress { height: 10px; background: #eeebe2; border-radius: 999px; overflow: hidden; margin-top: 12px; }
+    .progress > div { height: 100%; background: #2e8b57; width: 0%; transition: width .3s; }
+    .hint { color: #948f80; font-size: 13px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; background: #ffffff;
+            border: 1px solid #e6e2d8; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 1px 2px rgba(60,55,40,.04); }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #eeebe2; font-size: 14px; }
+    th { color: #948f80; font-weight: 600; font-size: 12px; text-transform: uppercase;
+         letter-spacing: .04em; background: #faf8f2; }
+    tr:last-child td { border-bottom: none; }
+    .badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .badge.GRANTED { background: rgba(46,139,87,.12); color: #2e8b57; }
+    .badge.DENIED { background: rgba(192,73,47,.12); color: #c0492f; }
+    .muted { color: #948f80; }
+    h2 { font-size: 15px; color: #514d43; margin: 0 0 12px; }
+    .empty { padding: 24px; text-align: center; color: #948f80; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logout" href="/logout">Sign out</a>
+    <h1>VisionGate</h1>
+    <span class="sub" id="updated">live access dashboard</span>
+  </header>
+  <main>
+    <div class="cards">
+      <div class="card"><div class="label">Total attempts</div><div class="value" id="total">—</div></div>
+      <div class="card grant"><div class="label">Granted</div><div class="value" id="granted">—</div></div>
+      <div class="card deny"><div class="label">Denied</div><div class="value" id="denied">—</div></div>
+      <div class="card"><div class="label">Deny rate</div><div class="value" id="denyRate">—</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Enroll a new face (camera scan)</h2>
+      <div class="row">
+        <input type="text" id="enrollName" placeholder="Person's name" />
+        <button id="startBtn" onclick="startEnroll()">Start camera scan</button>
+        <button class="ghost" id="cancelBtn" onclick="cancelEnroll()" style="display:none">Cancel</button>
+      </div>
+      <div id="enrollStatus" class="hint">
+        Enter a name and start a scan. The device will capture several frames and
+        register the face — no photo upload needed.
+      </div>
+      <div class="progress" id="progressWrap" style="display:none"><div id="progressBar"></div></div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <h2>Recent access events <span class="muted" id="userCount"></span></h2>
+        <table>
+          <thead><tr><th>#</th><th>Time</th><th>Name</th><th>Result</th><th>Conf.</th></tr></thead>
+          <tbody id="events"><tr><td colspan="5" class="empty">Waiting for events…</td></tr></tbody>
+        </table>
+      </div>
+      <div>
+        <h2>Registered users</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Samples</th><th></th></tr></thead>
+          <tbody id="users"><tr><td colspan="3" class="empty">No users yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function fmtTime(iso) { const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString(); }
+
+    async function refresh() {
+      try {
+        const [stats, events, users, enroll] = await Promise.all([
+          fetch('/api/stats').then(r => r.json()),
+          fetch('/api/events?limit=50').then(r => r.json()),
+          fetch('/api/users').then(r => r.json()),
+          fetch('/api/enroll/status').then(r => r.json()),
+        ]);
+
+        document.getElementById('total').textContent = stats.total;
+        document.getElementById('granted').textContent = stats.granted;
+        document.getElementById('denied').textContent = stats.denied;
+        document.getElementById('denyRate').textContent = (stats.deny_rate * 100).toFixed(1) + '%';
+        document.getElementById('userCount').textContent = '· ' + stats.registered_users + ' registered';
+        document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+
+        const tb = document.getElementById('events');
+        tb.innerHTML = events.length ? events.map(e => `
+          <tr><td class="muted">${e.id}</td><td>${fmtTime(e.timestamp)}</td><td>${e.name}</td>
+          <td><span class="badge ${e.result}">${e.result}</span></td>
+          <td>${(e.confidence * 100).toFixed(1)}%</td></tr>`).join('')
+          : '<tr><td colspan="5" class="empty">No events yet.</td></tr>';
+
+        const ub = document.getElementById('users');
+        ub.innerHTML = users.length ? users.map(u => `
+          <tr><td>${u.name}</td><td class="muted">${u.samples}</td>
+          <td><button class="danger" onclick="removeUser('${u.name.replace(/'/g,"\\'")}')">Remove</button></td></tr>`).join('')
+          : '<tr><td colspan="3" class="empty">No users yet.</td></tr>';
+
+        renderEnroll(enroll);
+      } catch (err) {
+        document.getElementById('updated').textContent = 'connection lost — retrying…';
+      }
+    }
+
+    function renderEnroll(e) {
+      const status = document.getElementById('enrollStatus');
+      const wrap = document.getElementById('progressWrap');
+      const bar = document.getElementById('progressBar');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const startBtn = document.getElementById('startBtn');
+
+      if (e && e.active && e.status !== 'complete') {
+        const pct = Math.round((e.frames_collected / e.frames_needed) * 100);
+        status.textContent = `Scanning "${e.name}" — captured ${e.frames_collected} of ${e.frames_needed} frames…`;
+        wrap.style.display = 'block'; bar.style.width = pct + '%';
+        cancelBtn.style.display = 'inline-block'; startBtn.disabled = true;
+      } else {
+        wrap.style.display = 'none'; cancelBtn.style.display = 'none'; startBtn.disabled = false;
+      }
+    }
+
+    async function startEnroll() {
+      const name = document.getElementById('enrollName').value.trim();
+      if (!name) { alert('Enter a name first.'); return; }
+      await fetch('/enroll/start', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+      document.getElementById('enrollName').value = '';
+      refresh();
+    }
+    async function cancelEnroll() {
+      await fetch('/enroll/cancel', { method: 'POST' });
+      refresh();
+    }
+    async function removeUser(name) {
+      if (!confirm('Remove ' + name + '?')) return;
+      await fetch('/users/delete', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+      refresh();
+    }
+
+    refresh();
+    setInterval(refresh, 2000);
+  </script>
+</body>
+</html>

@@ -23,11 +23,13 @@ def verify_face(image_base64: str) -> bool:
         return False
 
     payload = {"image_base64": image_base64}
+    headers = {"X-API-Key": config.API_KEY}
 
     try:
         response = requests.post(
             config.API_URL,
             json=payload,
+            headers=headers,
             timeout=config.API_TIMEOUT_SECONDS,
         )
         response.raise_for_status()

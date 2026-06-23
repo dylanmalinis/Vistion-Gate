@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VisionGate — Admin Login</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #f6f4ee; color: #33312b;
+    }
+    .box {
+      width: 320px; background: #ffffff; border: 1px solid #e6e2d8; border-radius: 14px;
+      padding: 28px; box-shadow: 0 2px 8px rgba(60,55,40,.06); text-align: center;
+    }
+    h1 { font-size: 22px; margin: 0 0 4px; color: #2b2924; }
+    .sub { color: #948f80; font-size: 13px; margin-bottom: 20px; }
+    label { display: block; text-align: left; font-size: 12px; color: #948f80;
+            text-transform: uppercase; letter-spacing: .05em; margin: 12px 0 4px; }
+    input {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd8cc; border-radius: 8px;
+      font-size: 14px; background: #fbfaf5; color: #33312b;
+    }
+    input:focus { outline: none; border-color: #b9b3a3; }
+    button {
+      width: 100%; margin-top: 20px; padding: 11px; border: none; border-radius: 8px;
+      background: #2b2924; color: #fbfaf5; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    button:hover { background: #413d34; }
+    .error { color: #c0492f; font-size: 13px; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <form class="box" method="post">
+    <h1>VisionGate</h1>
+    <div class="sub">admin sign in</div>
+    <label for="username">Username</label>
+    <input id="username" name="username" autocomplete="username" autofocus />
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" />
+    <button type="submit">Sign in</button>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  </form>
+</body>
+</html>
